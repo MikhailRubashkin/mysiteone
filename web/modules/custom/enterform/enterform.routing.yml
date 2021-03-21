@@ -1,0 +1,9 @@
+enterform.text_form:
+  path: '/enterform/textform'
+  defaults:
+    _form: 'Drupal\enterform\Form\TextForm'
+    _title: 'Custom form'
+  requirements:
+    _permission: 'access administration pages'
+    options:
+    _admin_route: TRUE
