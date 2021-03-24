@@ -11,6 +11,7 @@ use Drupal\Core\Mail\MailInterface;
 use Drupal\Core\Mail\MailManager;
 
 
+
 class TextForm extends ConfigFormBase {
 
 
@@ -153,28 +154,21 @@ class TextForm extends ConfigFormBase {
                     $message = $form_state->getValue('message');
                     $email = $form_state->getValue('email');
 
-                    $mailManager = \Drupal::service('plugin.manager.mail');
-
-                    $module = 'module_mail';
-
+                    $module = 'admin@mail.ru';
                     $key = 'contact_submit';
-
                     $to = \Drupal::config('system.site')->get('mail');
-
                     $params['subject'] = $subject;
                     $params['message'] = $message;
-
                     $langcode = \Drupal::currentUser()->getPreferredLangcode();
 
-                    $send = TRUE;
+                    $result = \Drupal::service('plugin.manager.mail')
+                    ->mail($module, $key, $to, $langcode, $params, $reply = NULL, $send = TRUE);
 
-                    $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, $send);
-
-                    if ($result['result'] !== true) {
-                      drupal_set_message($this->t('There was a problem sending your message or your mail: @email is not correct.'), 'error');
+                    if ($result['send'] !== true) {
+                      drupal_set_message($this->t('There was a problem sending your message or your email is not correct.'), 'error');
                     }
                     else {
-                      drupal_set_message(t('You will receive a confirmation email shortly. Your mail:@email'));
+                      drupal_set_message(t('You will receive a confirmation email shortly.'));
                       $this->config('textform.adminsettings')
                       ->set('firstName', $form_state->getValue('firstName'))
                       ->set('lastName', $form_state->getValue('lastName'))
@@ -182,7 +176,16 @@ class TextForm extends ConfigFormBase {
                       ->set('message', $form_state->getValue('message'))
                       ->set('email', $form_state->getValue('email'))
                       ->save();
-                      drupal_set_message(t('Added message log entry. Your mail: @email.'));
+                      drupal_set_message(t('Added message log entry.'));
+                      $query = \Drupal::database()->insert('enterform');
+                      $query->fields([
+                      'firstName' => $firstName,
+                      'lastName' => $lastName,
+                      'subject' => $subject,
+                      'message' => $message,
+                      'email' => $email,
+                      ]);
+                      $query->execute();
                       parent::submitForm($form, $form_state);
                     }
 
