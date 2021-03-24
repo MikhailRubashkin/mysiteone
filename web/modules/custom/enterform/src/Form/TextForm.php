@@ -149,7 +149,7 @@ class TextForm extends ConfigFormBase {
                     $config = \Drupal::config('textform.adminsettings');
                     $firstName = $form_state->getValue('firstName');
                     $lastName = $form_state->getValue('lastName');
-                    $subject = $form_state->getValue('subject');
+                    $subject = $form_state->getValue('$subject');
                     $message = $form_state->getValue('message');
                     $email = $form_state->getValue('email');
 
@@ -171,10 +171,10 @@ class TextForm extends ConfigFormBase {
                     $result = $mailManager->mail($module, $key, $to, $langcode, $params, NULL, $send);
 
                     if ($result['result'] !== true) {
-                      drupal_set_message($this->t('There was a problem sending your message'), 'error');
+                      drupal_set_message($this->t('There was a problem sending your message or your mail: @email is not correct.'), 'error');
                     }
                     else {
-                      drupal_set_message(t('Your message has been sent.'));
+                      drupal_set_message(t('You will receive a confirmation email shortly. Your mail:@email'));
                       $this->config('textform.adminsettings')
                       ->set('firstName', $form_state->getValue('firstName'))
                       ->set('lastName', $form_state->getValue('lastName'))
@@ -182,6 +182,7 @@ class TextForm extends ConfigFormBase {
                       ->set('message', $form_state->getValue('message'))
                       ->set('email', $form_state->getValue('email'))
                       ->save();
+                      drupal_set_message(t('Added message log entry. Your mail: @email.'));
                       parent::submitForm($form, $form_state);
                     }
 
@@ -199,6 +200,50 @@ class TextForm extends ConfigFormBase {
                                 break;
                         }
                     }
+
+
+            $data = array(
+              'properties' => [
+                [
+                  'property' => 'firstName',
+                  'value' => $firstName
+                ],
+                [
+                  'property' => 'lastName',
+                  'value' => $lastName
+                ],
+                [
+                  'property' => 'subject',
+                  'value' => $subject
+                ],
+                [
+                  'property' => 'message',
+                  'value' => $message
+                ],
+                [
+                  'property' => 'email',
+                  'value' => $email
+                ]
+              ]
+            );
+
+
+                    $opts = array('http' =>
+                      array(
+                        'method'  => 'POST',
+                        'header'  => "Content-Type: application/json; charset=utf-8\r\n",
+                        'content' => json_encode($data,TRUE)
+                      )
+                    );
+
+                    $context  = stream_context_create($opts);
+                    $url = 'https://api.hubapi.com/contacts/v1/contact/createOrUpdate/email/'.$email.'/?hapikey=d4abb0f3-ee51-4670-80ca-************';
+                    $res = file_get_contents($url, NULL, $context);
+                    if($res) {
+                    drupal_set_message('Contact successfully created on Hubspot !!!!');
+                     }else {
+                       drupal_set_message($this->t('There was a problem sending hubspot message'), 'error');
+                     }
     $form_state->setRedirect('<front>');
   }
 }
