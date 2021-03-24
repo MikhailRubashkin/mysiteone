@@ -8,8 +8,19 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Mail\Plugin\Mail;
 use Drupal\Core\Mail\MailFormatHelper;
 use Drupal\Core\Mail\MailInterface;
+use Drupal\Core\Mail\MailManager;
+
 
 class TextForm extends ConfigFormBase {
+
+
+    public $properties = [];
+    protected $firstName;
+    protected $lastName;
+    protected $subject;
+    protected $message;
+    protected $email;
+
 
 
   protected function getEditableConfigNames() {
